@@ -1,0 +1,94 @@
+import { Blog } from "../model/blog";
+import { Tag } from "../model/tag";
+import { BlogTag } from "../model/blog-tag";
+import { AppDataSource } from "../data-source";
+
+class BlogService {
+    private blogRepository
+    private tagRepository
+    private blogTagRepository
+    constructor() {
+        this.blogRepository = AppDataSource.getRepository(Blog);
+        this.tagRepository = AppDataSource.getRepository(Tag);
+        this.blogTagRepository = AppDataSource.getRepository(BlogTag);
+    }
+
+    getAll = async () => {
+        let sql = `SELECT * FROM user u JOIN blog p ON u.idUser = p.user JOIN blog_tag b ON p.id = b.blog JOIN tag t ON b.tag = t.idTag`
+        let blogs = await this.blogRepository.query(sql);
+        return blogs;
+    }
+
+    getPublic = async () => {
+        let sql = `SELECT * FROM user u JOIN blog p ON u.idUser = p.user JOIN blog_tag b ON p.id = b.blog JOIN tag t ON b.tag = t.idTag WHERE statusBlog = 'Public'`
+        let blogs = await this.blogRepository.query(sql);
+        return blogs;
+    }
+
+    getMyBlogPrivate = async(idUser) => {
+        let sql = `SELECT * FROM user u JOIN blog p ON u.idUser = p.user JOIN blog_tag b ON p.id = b.blog JOIN tag t ON b.tag = t.idTag WHERE idUser = ${idUser} AND statusBlog = 'Private'`
+        let blogs = await this.blogRepository.query(sql);
+        return blogs;
+    }
+
+    getMyBlog = async(idUser) => {
+        let sql = `SELECT * FROM user u JOIN blog p ON u.idUser = p.user JOIN blog_tag b ON p.id = b.blog JOIN tag t ON b.tag = t.idTag WHERE idUser = ${idUser}`
+        let blogs = await this.blogRepository.query(sql);
+        return blogs;
+    }
+
+    save = async (blog) => {
+        return this.blogRepository.save(blog);
+    }
+
+    saveBlogTag = async (blogTag) => {
+        return this.blogTagRepository.save(blogTag);
+    }
+
+    private update = async (id, newblog) => {
+        let blog = await this.blogRepository.findOneBy({id: id});
+        if (!blog) {
+            return null;
+        }
+        await this.blogRepository.update({id: id}, {name: newblog.name, content: newblog.content, image: newblog.image, statusBlog: newblog.statusBlog});
+        await this.blogTagRepository.update({blog: id}, {tag: newblog.tag});
+        return "Update success";
+    }
+
+    findById = async (id) => {
+        let sql = `SELECT * FROM blog p JOIN blog_tag b ON p.id = b.blog JOIN tag t ON b.tag = t.idTag WHERE id = ${id}`
+        let blog = await this.blogRepository.query(sql);
+        if (!blog) {
+            return null;
+        }
+        return blog;
+    }
+
+    findByName = async (name) => {
+        let blog = await this.blogRepository.findOneBy({name: name});
+        if (!blog) {
+            return null;
+        }
+        return blog;
+    }
+
+    private remove = async (id) => {
+        let blog = await this.blogRepository.findOneBy({id: id});
+        if (!blog) {
+            return null;
+        }
+        return this.blogRepository.delete({id: id});
+    }
+
+    search = async (name) => {
+        let sql = `SELECT * FROM blog p JOIN blog_tag b ON p.id = b.blog JOIN tag t ON b.tag = t.idTag WHERE name LIKE '%${name}%' AND statusBlog = 'public'`;
+        let blogs1 = await this.blogRepository.query(sql);
+        sql = 
+        if (!blogs1) {
+            return null;
+        }
+        return blogs1;
+    }
+}
+
+export default new BlogService();
